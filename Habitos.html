@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Hábitos y Comunidad</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --sidebar: #131c31;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --warning: #f59e0b;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; }
+    .hidden { display: none !important; }
+
+    /* MODALES FLOTANTES (LOGIN Y CONFIRMACIÓN) */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(6px); display: flex; justify-content: center;
+      align-items: center; padding: 1.5rem; z-index: 1000;
+      animation: fadeIn 0.15s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .auth-card {
+      background: var(--card); padding: 2rem; border-radius: 14px;
+      border: 1px solid var(--border); width: 100%; max-width: 400px;
+      display: grid; gap: 1.15rem; position: relative;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+    }
+    .close-modal {
+      position: absolute; top: 0.9rem; right: 1rem; background: none;
+      border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer;
+    }
+    .close-modal:hover { color: var(--text); }
+    .auth-card h2 { text-align: center; font-size: 1.5rem; }
+    .auth-card p { text-align: center; color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
+    .form-group { display: grid; gap: 0.4rem; }
+    .form-group label { font-size: 0.85rem; color: var(--muted); }
+    .form-group input {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      padding: 0.75rem 1rem; border-radius: 8px; outline: none;
+    }
+    .form-group input:focus { border-color: var(--accent); }
+    .auth-error { color: var(--danger); font-size: 0.85rem; text-align: center; min-height: 1.2rem; }
+    .auth-switch { text-align: center; font-size: 0.85rem; color: var(--muted); }
+    .auth-switch span { color: var(--accent); cursor: pointer; font-weight: 600; }
+
+    /* LAYOUT PRINCIPAL CON SIDEBAR */
+    .app-layout { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+    @media (max-width: 860px) { .app-layout { grid-template-columns: 1fr; } }
+
+    .sidebar {
+      background: var(--sidebar); border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem;
+    }
+    .brand { font-size: 1.25rem; font-weight: 800; color: var(--accent); padding: 0 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .nav-menu { display: grid; gap: 0.4rem; margin-top: 1.5rem; }
+    .nav-btn {
+      background: transparent; border: none; color: var(--muted); text-align: left;
+      padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.15s;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .nav-btn.active { background: rgba(56, 189, 248, 0.15); color: var(--accent); }
+    .badge-count {
+      background: var(--danger); color: #fff; font-size: 0.75rem;
+      padding: 0.1rem 0.5rem; border-radius: 999px; font-weight: 700;
+    }
+
+    .sidebar-footer { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 0.82rem; color: var(--muted); padding-left: 0.5rem; }
+
+    /* CONTENIDO Y ENCABEZADO SUPERIOR */
+    .main-content { padding: 1.75rem 2rem; max-width: 1150px; width: 100%; margin: 0 auto; display: grid; gap: 1.4rem; align-content: start; }
+    .top-header {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+    }
+    .top-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+    .status-badge { font-size: 0.8rem; padding: 0.35rem 0.8rem; border-radius: 999px; font-weight: 600; }
+    .status-online { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+    .status-demo { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.35); }
+    .status-offline { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+    .user-chip {
+      background: rgba(56, 189, 248, 0.12); color: var(--accent);
+      padding: 0.4rem 0.85rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+    }
+
+    /* BANNER DE MODO PRUEBA */
+    .demo-banner {
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.12), rgba(34, 197, 94, 0.1));
+      border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 12px;
+      padding: 0.95rem 1.25rem; display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 1rem;
+    }
+    .demo-banner-text { font-size: 0.9rem; color: var(--text); }
+    .demo-banner-text strong { color: var(--accent); }
+
+    /* COMPONENTES GENERALES */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .kpi-card { background: var(--card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border); }
+    .kpi-title { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .kpi-value { font-size: 1.75rem; font-weight: 700; margin-top: 0.35rem; color: var(--accent); }
+
+    .bar-form { display: flex; gap: 0.75rem; background: var(--card); padding: 1rem; border-radius: 12px; border: 1px solid var(--border); flex-wrap: wrap; }
+    .bar-form input, .select-input {
+      flex: 1; min-width: 220px; background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); padding: 0.65rem 1rem; border-radius: 8px; outline: none; font-size: 0.9rem;
+    }
+    .bar-form input:focus, .select-input:focus { border-color: var(--accent); }
+
+    .btn { background: var(--accent); color: #0f172a; border: none; padding: 0.6rem 1.15rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
+    .btn:hover { opacity: 0.9; }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.82rem; }
+    .btn-success { background: var(--success); color: #052e16; }
+    .btn-danger { background: var(--danger); color: #fff; border: 1px solid var(--danger); }
+    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .main-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.5rem; }
+    @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+    .panel { background: var(--card); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border); }
+    .panel h2 { font-size: 1.05rem; margin-bottom: 1rem; color: var(--text); }
+
+    table { width: 100%; border-collapse: collapse; text-align: center; }
+    th, td { padding: 0.65rem 0.4rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    th { color: var(--muted); font-weight: 600; }
+    td.habit-name-cell, th.habit-name-header { text-align: left; }
+
+    input[type="checkbox"] {
+      appearance: none; width: 22px; height: 22px; border: 2px solid var(--border);
+      border-radius: 6px; background: var(--bg); cursor: pointer; position: relative;
+      vertical-align: middle; transition: all 0.15s ease;
+    }
+    input[type="checkbox"]:checked { background: var(--success); border-color: var(--success); }
+    input[type="checkbox"]:checked::after {
+      content: '✓'; position: absolute; color: #052e16; font-weight: 900;
+      font-size: 14px; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    }
+
+    /* Casillas de selección múltiple para eliminar (color rojo) */
+    input[type="checkbox"].select-delete-cb { border-color: rgba(239, 68, 68, 0.6); }
+    input[type="checkbox"].select-delete-cb:checked { background: var(--danger); border-color: var(--danger); }
+    input[type="checkbox"].select-delete-cb:checked::after { content: '✓'; color: #fff; }
+    .selectable-habit-name { cursor: pointer; user-select: none; }
+    .selectable-habit-name:hover { color: var(--danger); }
+    tr.row-selected { background: rgba(239, 68, 68, 0.08); }
+
+    .streak-badge {
+      display: inline-block; background: rgba(56, 189, 248, 0.15); color: var(--accent);
+      padding: 0.2rem 0.55rem; border-radius: 999px; font-weight: 700; font-size: 0.8rem;
+    }
+
+    /* ==================== ESTILOS DEL CALENDARIO DE HÁBITOS ==================== */
+    .cal-controls {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem; margin-bottom: 1.2rem;
+    }
+    .cal-month-nav { display: flex; align-items: center; gap: 0.75rem; }
+    .cal-month-label { font-size: 1.05rem; font-weight: 700; min-width: 155px; text-align: center; text-transform: capitalize; color: var(--accent); }
+
+    .cal-weekdays, .cal-days-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;
+    }
+    .cal-weekdays div {
+      text-align: center; font-size: 0.8rem; font-weight: 700; color: var(--muted); padding-bottom: 0.4rem;
+    }
+    .cal-day {
+      min-height: 54px; border-radius: 10px; padding: 0.45rem;
+      display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+      border: 1px solid var(--border); background: var(--bg); font-size: 0.85rem;
+      transition: transform 0.12s ease, border-color 0.12s ease; user-select: none;
+    }
+    .cal-day.empty { background: transparent; border: none; pointer-events: none; }
+    .cal-day.clickable { cursor: pointer; }
+    .cal-day.clickable:hover { transform: translateY(-2px); border-color: var(--accent); }
+    
+    /* Día Cumplido */
+    .cal-day.done {
+      background: rgba(34, 197, 94, 0.18);
+      border-color: rgba(34, 197, 94, 0.55);
+      color: #dcfce7;
+    }
+    /* Día No Cumplido */
+    .cal-day.missed {
+      background: rgba(239, 68, 68, 0.13);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fecaca;
+    }
+    /* Día Futuro o previo a la creación */
+    .cal-day.inactive {
+      opacity: 0.38;
+      background: rgba(15, 23, 42, 0.5);
+    }
+    .cal-day.today {
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+    .cal-day-num { font-weight: 700; font-size: 0.85rem; }
+    .cal-day-icon { font-size: 0.95rem; }
+
+    .cal-legend {
+      display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: center;
+      margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border);
+      font-size: 0.82rem; color: var(--muted); justify-content: space-between;
+    }
+    .legend-items { display: flex; gap: 1.1rem; flex-wrap: wrap; }
+    .legend-dot { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 0.35rem; vertical-align: middle; }
+
+    /* TARJETAS DE AMIGOS */
+    .friends-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+    .friend-card {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 1rem; display: grid; gap: 0.75rem;
+    }
+    .friend-header { display: flex; justify-content: space-between; align-items: center; }
+    .friend-name { font-weight: 700; font-size: 1rem; color: var(--accent); }
+    .friend-stats { font-size: 0.85rem; color: var(--muted); display: flex; gap: 1rem; }
+    .request-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem;
+    }
+    .msg-feedback { font-size: 0.85rem; min-height: 1.2rem; }
+  </style>
+</head>
+<body>
+
+<!-- MODAL FLOTANTE 1: INICIAR SESIÓN / CREAR CUENTA -->
+<div id="auth-modal" class="modal-overlay hidden" onclick="if(event.target === this) closeAuthModal()">
+  <div class="auth-card">
+    <button class="close-modal" onclick="closeAuthModal()" title="Seguir en modo prueba">&times;</button>
+    <h2 id="auth-title">Iniciar Sesión</h2>
+    <p id="auth-subtitle">Ingresa a tu cuenta para guardar y sincronizar tus hábitos</p>
+    <div class="form-group">
+      <label>Nombre de usuario</label>
+      <input type="text" id="auth-username" placeholder="Ej. roman">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="auth-password" placeholder="••••••••" onkeypress="if(event.key === 'Enter') submitAuth()">
+    </div>
+    <div id="auth-error" class="auth-error"></div>
+    <button class="btn" id="auth-btn" onclick="submitAuth()">Entrar</button>
+    <div class="auth-switch">
+      <span id="auth-toggle-text" onclick="toggleAuthMode()">¿No tienes cuenta? Regístrate aquí</span>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FLOTANTE 2: CONFIRMACIÓN PERSONALIZADA -->
+<div id="confirm-modal" class="modal-overlay hidden" onclick="if(event.target === this) closeConfirmModal()">
+  <div class="auth-card" style="max-width: 380px; text-align: center; gap: 1rem;">
+    <div id="confirm-icon" style="font-size: 2.2rem;">⚠️</div>
+    <h2 id="confirm-title" style="font-size: 1.25rem;">¿Estás seguro?</h2>
+    <p id="confirm-message">Esta acción no se puede deshacer.</p>
+    <div style="display: flex; gap: 0.75rem; justify-content: center; margin-top: 0.5rem;">
+      <button class="btn btn-outline" id="confirm-cancel-btn" style="flex: 1;" onclick="closeConfirmModal()">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok-btn" style="flex: 1;">Sí, continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APLICACIÓN PRINCIPAL -->
+<div class="app-layout">
+  <aside class="sidebar">
+    <div>
+      <div class="brand">⚡ HabitTracker</div>
+      <nav class="nav-menu">
+        <button class="nav-btn active" id="nav-semanal" onclick="switchTab('semanal')">
+          <span>📊 Panel Semanal</span>
+        </button>
+        <button class="nav-btn" id="nav-historial" onclick="switchTab('historial')">
+          <span>📜 Historial y Calendario</span>
+        </button>
+        <button class="nav-btn" id="nav-amigos" onclick="switchTab('amigos')">
+          <span>👥 Amigos</span>
+          <span id="friend-req-badge" class="badge-count hidden">0</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <span id="sidebar-mode-label">Modo Vista Previa</span>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <h1 id="page-title">Panel Semanal de Hábitos</h1>
+
+      <div class="top-actions">
+        <span id="db-status" class="status-badge status-demo">✨ Modo Vista Previa</span>
+
+        <div id="guest-actions" style="display: flex; gap: 0.6rem;">
+          <button class="btn btn-outline" onclick="openAuthModal('login')">Iniciar Sesión</button>
+          <button class="btn" onclick="openAuthModal('register')">Crear Cuenta</button>
+        </div>
+
+        <div id="user-actions" class="hidden" style="display: flex; align-items: center; gap: 0.6rem;">
+          <span class="user-chip" id="user-display">👤 Usuario</span>
+          <button class="btn btn-outline" onclick="logout()">Cerrar Sesión</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="demo-banner" class="demo-banner">
+      <div class="demo-banner-text">
+        👋 <strong>Estás en el sitio de prueba interactivo:</strong> Marca casillas, explora el calendario mensual y prueba las gráficas libremente. Para guardar tu progreso en el servidor, inicia sesión o crea tu cuenta.
+      </div>
+      <button class="btn btn-sm" onclick="openAuthModal('register')">Guardar mi progreso →</button>
+    </div>
+
+    <!-- PESTAÑA 1: PANEL SEMANAL -->
+    <section id="tab-semanal" style="display: grid; gap: 1.5rem;">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Cumplimiento Semanal</div>
+          <div class="kpi-value" id="kpi-rate">0%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Mejor Racha Semanal</div>
+          <div class="kpi-value" id="kpi-streak">0 días</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Objetivos Logrados</div>
+          <div class="kpi-value" id="kpi-total">0 / 0</div>
+        </div>
+      </div>
+
+      <div class="bar-form">
+        <input type="text" id="habit-input" placeholder="Escribe un nuevo hábito o meta diaria para probar..." onkeypress="if(event.key === 'Enter') addHabit()">
+        <button class="btn" onclick="addHabit()">+ Añadir Hábito</button>
+        <button class="btn btn-outline" id="btn-delete-mode" onclick="handleDeleteAction()">🗑️ Eliminar Hábitos</button>
+        <button class="btn btn-outline hidden" id="btn-cancel-delete" onclick="toggleDeleteMode(false)">Cancelar</button>
+        <button class="btn btn-outline" onclick="resetWeek()">Reiniciar Semana</button>
+      </div>
+
+      <div class="main-grid">
+        <div class="panel">
+          <h2>Registro Diario (Lun - Dom)</h2>
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th id="th-select-all" class="hidden" style="width: 38px; text-align: center;">
+                    <input type="checkbox" id="cb-select-all" class="select-delete-cb" title="Seleccionar todos" onchange="toggleSelectAll(this.checked)">
+                  </th>
+                  <th class="habit-name-header">Hábito</th>
+                  <th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th>
+                  <th>Racha</th>
+                </tr>
+              </thead>
+              <tbody id="habit-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Progreso en la Semana</h2>
+          <canvas id="streakChart" height="230"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- PESTAÑA 2: MI HISTORIAL Y CALENDARIO MENSUAL -->
+    <section id="tab-historial" class="hidden" style="display: grid; gap: 1.5rem;">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Total de Hábitos Definidos</div>
+          <div class="kpi-value" id="hist-total-habits">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Días Cumplidos (Histórico Total)</div>
+          <div class="kpi-value" id="hist-total-checks">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Hábito Más Constante</div>
+          <div class="kpi-value" id="hist-top-habit" style="font-size: 1.15rem;">-</div>
+        </div>
+      </div>
+
+      <!-- NUEVO PANEL: CALENDARIO MENSUAL INTERACTIVO POR HÁBITO -->
+      <div class="panel" id="calendar-panel">
+        <div class="cal-controls">
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex: 1;">
+            <h2 style="margin: 0;">📅 Calendario por Hábito:</h2>
+            <select id="cal-habit-select" class="select-input" style="max-width: 320px;" onchange="onSelectCalendarHabit()">
+            </select>
+          </div>
+
+          <div class="cal-month-nav">
+            <button class="btn btn-sm btn-outline" onclick="changeCalendarMonth(-1)">◀ Anterior</button>
+            <span id="cal-month-title" class="cal-month-label">Octubre 2026</span>
+            <button class="btn btn-sm btn-outline" onclick="changeCalendarMonth(1)">Siguiente ▶</button>
+          </div>
+        </div>
+
+        <div class="cal-weekdays">
+          <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+        </div>
+        <div id="cal-days-grid" class="cal-days-grid"></div>
+
+        <div class="cal-legend">
+          <div class="legend-items">
+            <span><i class="legend-dot" style="background: rgba(34, 197, 94, 0.7);"></i>✅ Día cumplido</span>
+            <span><i class="legend-dot" style="background: rgba(239, 68, 68, 0.65);"></i>❌ Día no cumplido</span>
+            <span><i class="legend-dot" style="background: rgba(148, 163, 184, 0.25);"></i>➖ Sin seguimiento / Futuro</span>
+          </div>
+          <span id="cal-month-summary" style="color: var(--accent); font-weight: 600;">💡 Haz clic en un día pasado o de hoy para marcarlo o desmarcarlo</span>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <div class="panel">
+          <h2>Historial Acumulado de Todas tus Metas</h2>
+          <table>
+            <thead>
+              <tr>
+                <th class="habit-name-header">Hábito / Meta</th>
+                <th>Creado el</th>
+                <th>Total Cumplidos</th>
+                <th>Calendario</th>
+              </tr>
+            </thead>
+            <tbody id="hist-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h2>Bitácora de Actividad Reciente</h2>
+          <table>
+            <thead>
+              <tr>
+                <th class="habit-name-header">Hábito Cumplido</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PESTAÑA 3: AMIGOS Y ESTADÍSTICAS COMPARTIDAS -->
+    <section id="tab-amigos" class="hidden" style="display: grid; gap: 1.5rem;">
+      <div class="bar-form">
+        <input type="text" id="friend-input" placeholder="Ingresa el nombre de usuario exacto de tu amigo..." onkeypress="if(event.key === 'Enter') sendFriendRequest()">
+        <button class="btn" onclick="sendFriendRequest()">Enviar Solicitud de Amistad</button>
+      </div>
+      <div id="friend-feedback" class="msg-feedback"></div>
+
+      <div class="main-grid">
+        <div class="panel">
+          <h2>Mis Amigos Agregados</h2>
+          <div id="friends-list" class="friends-grid"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Solicitudes de Amistad Pendientes</h2>
+          <div id="incoming-requests"></div>
+          <h2 style="margin-top: 1.25rem;">Solicitudes Enviadas</h2>
+          <div id="outgoing-requests"></div>
+        </div>
+      </div>
+
+      <div id="friend-stats-panel" class="panel hidden" style="border-color: var(--accent);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2 id="friend-stats-title" style="margin: 0; color: var(--accent);">Estadísticas de Amigo</h2>
+          <button class="btn btn-sm btn-outline" onclick="document.getElementById('friend-stats-panel').classList.add('hidden')">Cerrar Vista</button>
+        </div>
+
+        <div class="kpi-grid" style="margin-bottom: 1rem;">
+          <div class="kpi-card">
+            <div class="kpi-title">Cumplimiento Semanal</div>
+            <div class="kpi-value" id="f-weekly-rate">0%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Checks esta Semana</div>
+            <div class="kpi-value" id="f-weekly-checks">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Total Histórico Cumplido</div>
+            <div class="kpi-value" id="f-total-hist">0 días</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th class="habit-name-header">Hábito / Meta del Amigo</th>
+              <th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th>
+              <th>Total Histórico</th>
+            </tr>
+          </thead>
+          <tbody id="friend-stats-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const API_URL = window.location.protocol === 'file:' ? 'http://localhost:5000/api' : '/api';
+  const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  
+  let currentUser = JSON.parse(localStorage.getItem('habit_user')) || null;
+  let isRegisterMode = false;
+  let habits = [];
+  let chartInstance = null;
+  let confirmCallback = null;
+
+  // Estado para selección múltiple de eliminación
+  let isDeleteMode = false;
+  let selectedForDelete = new Set();
+
+  // Estado para el Calendario Mensual
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth(); // 0 a 11
+  let selectedCalHabitId = null;
+  let calHabitData = null; // { id, name, createdAt, completedDates: Set }
+
+  const defaultDemoHabits = [
+    { id: 101, name: '💻 Programar / Práctica de código', days: [true, true, true, false, true, false, false], extraDates: ['2026-10-01', '2026-10-02', '2026-10-05', '2026-10-06', '2026-10-08', '2026-10-09', '2026-10-10'] },
+    { id: 102, name: '🏋️ Entrenamiento físico', days: [true, false, true, true, false, false, false], extraDates: ['2026-10-01', '2026-10-03', '2026-10-06', '2026-10-07', '2026-10-09'] },
+    { id: 103, name: '📖 Lectura técnica (20 min)', days: [true, true, true, true, true, false, false], extraDates: ['2026-10-02', '2026-10-04', '2026-10-05', '2026-10-07', '2026-10-08', '2026-10-11'] },
+    { id: 104, name: '😴 Dormir 7-8 horas', days: [false, true, true, true, true, false, false], extraDates: ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-06', '2026-10-10'] }
+  ];
+  let demoHabits = JSON.parse(JSON.stringify(defaultDemoHabits));
+
+  function formatLocalISO(dateObj) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function getMondayOfCurrentWeek() {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(today.setDate(diff));
+  }
+
+  // ==================== MODAL DE CONFIRMACIÓN PERSONALIZADO ====================
+  function showCustomConfirm({ icon = '⚠️', title, message, confirmText = 'Aceptar', showCancel = true, onConfirm }) {
+    document.getElementById('confirm-icon').textContent = icon;
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-message').textContent = message;
+    
+    const cancelBtn = document.getElementById('confirm-cancel-btn');
+    if (showCancel) cancelBtn.classList.remove('hidden');
+    else cancelBtn.classList.add('hidden');
+
+    const okBtn = document.getElementById('confirm-ok-btn');
+    okBtn.textContent = confirmText;
+    confirmCallback = onConfirm;
+    
+    okBtn.onclick = async () => {
+      if (confirmCallback) await confirmCallback();
+      closeConfirmModal();
+    };
+
+    document.getElementById('confirm-modal').classList.remove('hidden');
+  }
+
+  function closeConfirmModal() {
+    document.getElementById('confirm-modal').classList.add('hidden');
+    confirmCallback = null;
+  }
+
+  // ==================== MODAL DE AUTENTICACIÓN ====================
+  function openAuthModal(mode) {
+    isRegisterMode = (mode === 'register');
+    updateAuthModalText();
+    document.getElementById('auth-error').textContent = '';
+    document.getElementById('auth-modal').classList.remove('hidden');
+    document.getElementById('auth-username').focus();
+  }
+
+  function closeAuthModal() {
+    document.getElementById('auth-modal').classList.add('hidden');
+  }
+
+  function toggleAuthMode() {
+    isRegisterMode = !isRegisterMode;
+    document.getElementById('auth-error').textContent = '';
+    updateAuthModalText();
+  }
+
+  function updateAuthModalText() {
+    document.getElementById('auth-title').textContent = isRegisterMode ? 'Crear Cuenta' : 'Iniciar Sesión';
+    document.getElementById('auth-subtitle').textContent = isRegisterMode
+      ? 'Regístrate para guardar tus propios hábitos en el servidor'
+      : 'Ingresa a tu cuenta para gestionar tus hábitos';
+    document.getElementById('auth-btn').textContent = isRegisterMode ? 'Registrarme' : 'Entrar';
+    document.getElementById('auth-toggle-text').textContent = isRegisterMode
+      ? '¿Ya tienes cuenta? Inicia sesión'
+      : '¿No tienes cuenta? Regístrate aquí';
+  }
+
+  async function submitAuth() {
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value.trim();
+    const errorBox = document.getElementById('auth-error');
+    errorBox.textContent = '';
+
+    const endpoint = isRegisterMode ? '/register' : '/login';
+    try {
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) { errorBox.textContent = data.error || 'Error'; return; }
+      currentUser = data;
+      selectedCalHabitId = null;
+      localStorage.setItem('habit_user', JSON.stringify(currentUser));
+      document.getElementById('auth-username').value = '';
+      document.getElementById('auth-password').value = '';
+      closeAuthModal();
+      checkSession();
+    } catch (err) {
+      errorBox.textContent = 'No se pudo conectar con el servidor.';
+    }
+  }
+
+  function logout() {
+    currentUser = null;
+    selectedCalHabitId = null;
+    localStorage.removeItem('habit_user');
+    document.getElementById('friend-stats-panel').classList.add('hidden');
+    toggleDeleteMode(false);
+    checkSession();
+  }
+
+  function checkSession() {
+    const guestActions = document.getElementById('guest-actions');
+    const userActions = document.getElementById('user-actions');
+    const demoBanner = document.getElementById('demo-banner');
+    const sidebarLabel = document.getElementById('sidebar-mode-label');
+    const badge = document.getElementById('friend-req-badge');
+
+    if (currentUser) {
+      guestActions.classList.add('hidden');
+      userActions.classList.remove('hidden');
+      demoBanner.classList.add('hidden');
+      document.getElementById('user-display').textContent = `👤 ${currentUser.username}`;
+      sidebarLabel.textContent = `Conectado como ${currentUser.username}`;
+      switchTab('semanal');
+      loadFriends();
+    } else {
+      guestActions.classList.remove('hidden');
+      userActions.classList.add('hidden');
+      demoBanner.classList.remove('hidden');
+      badge.classList.add('hidden');
+      sidebarLabel.textContent = 'Modo Vista Previa (Sin sesión)';
+      setDemoStatus();
+      switchTab('semanal');
+    }
+  }
+
+  // ==================== NAVEGACIÓN DE PESTAÑAS ====================
+  function switchTab(tabName) {
+    ['semanal', 'historial', 'amigos'].forEach(t => {
+      document.getElementById(`tab-${t}`).classList.add('hidden');
+      document.getElementById(`nav-${t}`).classList.remove('active');
+    });
+
+    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+    document.getElementById(`nav-${tabName}`).classList.add('active');
+
+    const titles = {
+      semanal: 'Panel Semanal de Hábitos',
+      historial: 'Historial y Calendario de Hábitos',
+      amigos: 'Amigos y Estadísticas Compartidas'
+    };
+    document.getElementById('page-title').textContent = titles[tabName];
+
+    if (tabName === 'semanal') loadHabits();
+    if (tabName === 'historial') loadHistory();
+    if (tabName === 'amigos') loadFriends();
+  }
+
+  function setStatus(online) {
+    const badge = document.getElementById('db-status');
+    badge.textContent = online ? '● Conectado' : '● Sin conexión';
+    badge.className = `status-badge ${online ? 'status-online' : 'status-offline'}`;
+  }
+
+  function setDemoStatus() {
+    const badge = document.getElementById('db-status');
+    badge.textContent = '✨ Modo Vista Previa';
+    badge.className = 'status-badge status-demo';
+  }
+
+  // ==================== MODO SELECCIÓN MÚLTIPLE PARA ELIMINAR ====================
+  function toggleDeleteMode(enable) {
+    isDeleteMode = enable;
+    selectedForDelete.clear();
+
+    const btnDelete = document.getElementById('btn-delete-mode');
+    const btnCancel = document.getElementById('btn-cancel-delete');
+    const thSelectAll = document.getElementById('th-select-all');
+    const cbSelectAll = document.getElementById('cb-select-all');
+
+    if (isDeleteMode) {
+      btnDelete.className = 'btn btn-danger';
+      btnDelete.textContent = '🗑️ Eliminar seleccionados (0)';
+      btnCancel.classList.remove('hidden');
+      thSelectAll.classList.remove('hidden');
+      cbSelectAll.checked = false;
+    } else {
+      btnDelete.className = 'btn btn-outline';
+      btnDelete.textContent = '🗑️ Eliminar Hábitos';
+      btnCancel.classList.add('hidden');
+      thSelectAll.classList.add('hidden');
+      cbSelectAll.checked = false;
+    }
+
+    renderDashboard();
+  }
+
+  function updateDeleteButtonCount() {
+    const btnDelete = document.getElementById('btn-delete-mode');
+    const cbSelectAll = document.getElementById('cb-select-all');
+    const count = selectedForDelete.size;
+    btnDelete.textContent = `🗑️ Eliminar seleccionados (${count})`;
+    cbSelectAll.checked = (habits.length > 0 && count === habits.length);
+  }
+
+  function toggleHabitSelection(habitId, isSelected) {
+    if (isSelected) selectedForDelete.add(habitId);
+    else selectedForDelete.delete(habitId);
+    updateDeleteButtonCount();
+    renderDashboard();
+  }
+
+  function toggleSelectAll(checkAll) {
+    selectedForDelete.clear();
+    if (checkAll) habits.forEach(h => selectedForDelete.add(h.id));
+    updateDeleteButtonCount();
+    renderDashboard();
+  }
+
+  function handleDeleteAction() {
+    if (!isDeleteMode) {
+      if (habits.length === 0) return;
+      toggleDeleteMode(true);
+      return;
+    }
+
+    const count = selectedForDelete.size;
+    if (count === 0) {
+      showCustomConfirm({
+        icon: 'ℹ️',
+        title: 'Selecciona al menos un hábito',
+        message: 'Marca las casillas rojas a la izquierda de los hábitos que deseas eliminar (o presiona Cancelar para salir).',
+        confirmText: 'Entendido',
+        showCancel: false
+      });
+      return;
+    }
+
+    const idsToDelete = Array.from(selectedForDelete);
+    showCustomConfirm({
+      icon: '🗑️',
+      title: `Eliminar ${count} ${count === 1 ? 'hábito' : 'hábitos'}`,
+      message: `¿Seguro que deseas eliminar ${count === 1 ? 'el hábito seleccionado' : `los ${count} hábitos seleccionados`} y todo su historial?`,
+      confirmText: `Sí, eliminar (${count})`,
+      onConfirm: async () => {
+        if (!currentUser) {
+          demoHabits = demoHabits.filter(h => !selectedForDelete.has(h.id));
+          habits = demoHabits;
+          toggleDeleteMode(false);
+          return;
+        }
+
+        for (const id of idsToDelete) {
+          await fetch(`${API_URL}/habitos/${id}?userId=${currentUser.id}`, { method: 'DELETE' });
+        }
+        toggleDeleteMode(false);
+        await loadHabits();
+      }
+    });
+  }
+
+  // ==================== PESTAÑA 1: SEMANAL ====================
+  async function loadHabits() {
+    if (!currentUser) {
+      habits = demoHabits;
+      setDemoStatus();
+      renderDashboard();
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/habitos?userId=${currentUser.id}`);
+      habits = await res.json();
+      setStatus(true);
+      renderDashboard();
+    } catch (err) { setStatus(false); }
+  }
+
+  function calculateStreak(daysArray) {
+    let maxStreak = 0, current = 0;
+    for (let completed of daysArray) {
+      if (completed) { current++; if (current > maxStreak) maxStreak = current; }
+      else { current = 0; }
+    }
+    return maxStreak;
+  }
+
+  async function toggleDay(habitId, dayIndex, isChecked) {
+    if (!currentUser) {
+      const h = demoHabits.find(x => x.id === habitId);
+      if (h) h.days[dayIndex] = isChecked;
+      renderDashboard();
+      return;
+    }
+    await fetch(`${API_URL}/toggle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ habitId, dayIndex, completed: isChecked })
+    });
+    await loadHabits();
+  }
+
+  async function addHabit() {
+    const input = document.getElementById('habit-input');
+    const name = input.value.trim();
+    if (!name) return;
+
+    if (!currentUser) {
+      demoHabits.push({ id: Date.now(), name, days: [false, false, false, false, false, false, false], extraDates: [] });
+      input.value = '';
+      renderDashboard();
+      return;
+    }
+
+    await fetch(`${API_URL}/habitos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id, name })
+    });
+    input.value = '';
+    await loadHabits();
+  }
+
+  function resetWeek() {
+    showCustomConfirm({
+      icon: '🔄',
+      title: 'Reiniciar semana',
+      message: '¿Quieres desmarcar todas las casillas registradas en esta semana?',
+      confirmText: 'Sí, reiniciar',
+      onConfirm: async () => {
+        if (!currentUser) {
+          demoHabits.forEach(h => h.days = [false, false, false, false, false, false, false]);
+          renderDashboard();
+          return;
+        }
+        await fetch(`${API_URL}/reset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id })
+        });
+        await loadHabits();
+      }
+    });
+  }
+
+  function renderDashboard() {
+    const tbody = document.getElementById('habit-tbody');
+    tbody.innerHTML = '';
+    let totalChecks = 0, bestStreak = 0;
+    const totalPossible = habits.length * 7;
+
+    habits.forEach(habit => {
+      const tr = document.createElement('tr');
+      const isSelected = selectedForDelete.has(habit.id);
+      if (isDeleteMode && isSelected) tr.classList.add('row-selected');
+
+      const streak = calculateStreak(habit.days);
+      if (streak > bestStreak) bestStreak = streak;
+
+      let selectCellHtml = '';
+      if (isDeleteMode) {
+        selectCellHtml = `
+          <td>
+            <input type="checkbox" class="select-delete-cb" ${isSelected ? 'checked' : ''}
+                   onchange="toggleHabitSelection(${habit.id}, this.checked)">
+          </td>
+        `;
+      }
+
+      let daysHtml = '';
+      habit.days.forEach((checked, idx) => {
+        if (checked) totalChecks++;
+        daysHtml += `<td><input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleDay(${habit.id}, ${idx}, this.checked)"></td>`;
+      });
+
+      const nameCellContent = isDeleteMode
+        ? `<span class="selectable-habit-name" onclick="toggleHabitSelection(${habit.id}, ${!isSelected})">${habit.name}</span>`
+        : habit.name;
+
+      tr.innerHTML = `
+        ${selectCellHtml}
+        <td class="habit-name-cell">${nameCellContent}</td>
+        ${daysHtml}
+        <td><span class="streak-badge">🔥 ${streak}d</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const rate = totalPossible > 0 ? Math.round((totalChecks / totalPossible) * 100) : 0;
+    document.getElementById('kpi-rate').textContent = `${rate}%`;
+    document.getElementById('kpi-streak').textContent = `${bestStreak} días`;
+    document.getElementById('kpi-total').textContent = `${totalChecks} / ${totalPossible}`;
+    updateChart();
+  }
+
+  function updateChart() {
+    const dailyTotals = DAYS.map((_, dayIdx) => habits.reduce((sum, h) => sum + (h.days[dayIdx] ? 1 : 0), 0));
+    const ctx = document.getElementById('streakChart').getContext('2d');
+    if (chartInstance) {
+      chartInstance.data.datasets[0].data = dailyTotals;
+      chartInstance.options.scales.y.max = Math.max(habits.length, 1);
+      chartInstance.update();
+      return;
+    }
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: DAYS, datasets: [{ label: 'Completados', data: dailyTotals, backgroundColor: '#38bdf8', borderRadius: 6 }] },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, max: Math.max(habits.length, 1), ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: '#334155' } },
+          x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // ==================== PESTAÑA 2: HISTORIAL Y CALENDARIO MENSUAL ====================
+  async function loadHistory() {
+    const selectEl = document.getElementById('cal-habit-select');
+
+    if (!currentUser) {
+      const demoStats = demoHabits.map(h => {
+        const weekCount = h.days.filter(Boolean).length;
+        const extraCount = (h.extraDates || []).length;
+        return {
+          id: h.id,
+          name: h.name,
+          createdAt: '2026-10-01',
+          totalCompleted: weekCount + extraCount
+        };
+      }).sort((a, b) => b.totalCompleted - a.totalCompleted);
+
+      const totalChecks = demoStats.reduce((acc, item) => acc + item.totalCompleted, 0);
+      document.getElementById('hist-total-habits').textContent = demoStats.length;
+      document.getElementById('hist-total-checks').textContent = totalChecks;
+      document.getElementById('hist-top-habit').textContent = (demoStats.length > 0 && demoStats[0].totalCompleted > 0)
+        ? `${demoStats[0].name} (${demoStats[0].totalCompleted}d)`
+        : 'Sin registros aún';
+
+      document.getElementById('hist-tbody').innerHTML = demoStats.map(h => `
+        <tr>
+          <td class="habit-name-cell">${h.name}</td>
+          <td>${h.createdAt}</td>
+          <td><span class="streak-badge">✓ ${h.totalCompleted} días</span></td>
+          <td><button class="btn btn-sm btn-outline" onclick="inspectHabitInCalendar(${h.id})">📅 Ver Calendario</button></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('logs-tbody').innerHTML = `
+        <tr><td colspan="2" style="color: var(--muted);">Inicia sesión para guardar una bitácora permanente por fechas en SQL Server.</td></tr>
+      `;
+
+      populateCalendarSelect(demoStats);
+      return;
+    }
+
+    const res = await fetch(`${API_URL}/historial?userId=${currentUser.id}`);
+    const data = await res.json();
+
+    document.getElementById('hist-total-habits').textContent = data.totalHabits;
+    document.getElementById('hist-total-checks').textContent = data.totalCheckins;
+    document.getElementById('hist-top-habit').textContent = (data.habits.length > 0 && data.habits[0].totalCompleted > 0)
+      ? `${data.habits[0].name} (${data.habits[0].totalCompleted}d)`
+      : 'Sin registros aún';
+
+    document.getElementById('hist-tbody').innerHTML = data.habits.map(h => `
+      <tr>
+        <td class="habit-name-cell">${h.name}</td>
+        <td>${h.createdAt}</td>
+        <td><span class="streak-badge">✓ ${h.totalCompleted} días</span></td>
+        <td><button class="btn btn-sm btn-outline" onclick="inspectHabitInCalendar(${h.id})">📅 Ver Calendario</button></td>
+      </tr>
+    `).join('');
+
+    document.getElementById('logs-tbody').innerHTML = data.recentLogs.length > 0
+      ? data.recentLogs.map(l => `<tr><td class="habit-name-cell">${l.habitName}</td><td>${l.date}</td></tr>`).join('')
+      : `<tr><td colspan="2" style="color: var(--muted);">Aún no hay días marcados.</td></tr>`;
+
+    populateCalendarSelect(data.habits);
+  }
+
+  function populateCalendarSelect(habitList) {
+    const selectEl = document.getElementById('cal-habit-select');
+    if (!habitList || habitList.length === 0) {
+      selectEl.innerHTML = `<option value="">Sin hábitos registrados</option>`;
+      document.getElementById('cal-days-grid').innerHTML = '';
+      return;
+    }
+
+    if (!selectedCalHabitId || !habitList.some(h => h.id === selectedCalHabitId)) {
+      selectedCalHabitId = habitList[0].id;
+    }
+
+    selectEl.innerHTML = habitList.map(h =>
+      `<option value="${h.id}" ${h.id === selectedCalHabitId ? 'selected' : ''}>${h.name}</option>`
+    ).join('');
+
+    loadHabitCalendarData(selectedCalHabitId);
+  }
+
+  function onSelectCalendarHabit() {
+    const val = parseInt(document.getElementById('cal-habit-select').value, 10);
+    if (!isNaN(val)) {
+      selectedCalHabitId = val;
+      loadHabitCalendarData(val);
+    }
+  }
+
+  function inspectHabitInCalendar(habitId) {
+    selectedCalHabitId = habitId;
+    const selectEl = document.getElementById('cal-habit-select');
+    if (selectEl) selectEl.value = String(habitId);
+    loadHabitCalendarData(habitId);
+    document.getElementById('calendar-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function changeCalendarMonth(delta) {
+    calMonth += delta;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    else if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendarGrid();
+  }
+
+  async function loadHabitCalendarData(habitId) {
+    if (!currentUser) {
+      const h = demoHabits.find(x => x.id === habitId) || demoHabits[0];
+      if (!h) return;
+
+      const dateSet = new Set(h.extraDates || []);
+      const monday = getMondayOfCurrentWeek();
+      h.days.forEach((checked, idx) => {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + idx);
+        const iso = formatLocalISO(d);
+        if (checked) dateSet.add(iso);
+        else dateSet.delete(iso);
+      });
+
+      calHabitData = {
+        id: h.id,
+        name: h.name,
+        createdAt: '2026-10-01',
+        completedDates: dateSet
+      };
+      renderCalendarGrid();
+      return;
+    }
+
+    const res = await fetch(`${API_URL}/habitos/${habitId}/calendario?userId=${currentUser.id}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    calHabitData = {
+      id: data.id,
+      name: data.name,
+      createdAt: data.createdAt,
+      completedDates: new Set(data.completedDates)
+    };
+    renderCalendarGrid();
+  }
+
+  function renderCalendarGrid() {
+    document.getElementById('cal-month-title').textContent = `${MONTH_NAMES[calMonth]} ${calYear}`;
+    const grid = document.getElementById('cal-days-grid');
+    grid.innerHTML = '';
+
+    if (!calHabitData) return;
+
+    const firstDayOfMonth = new Date(calYear, calMonth, 1);
+    const totalDaysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    // Ajustar para que Lunes sea columna 0 y Domingo sea columna 6
+    const startOffset = (firstDayOfMonth.getDay() + 6) % 7;
+
+    const todayISO = formatLocalISO(new Date());
+    // Para que un hábito recién creado muestre todo el mes actual si no tiene registros previos,
+    // consideramos como inicio el 1 del mes de creación o su FechaCreacion exacta.
+    const startTrackingISO = calHabitData.createdAt.slice(0, 8) + '01';
+
+    for (let i = 0; i < startOffset; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.className = 'cal-day empty';
+      grid.appendChild(emptyCell);
+    }
+
+    let doneInMonth = 0;
+    let missedInMonth = 0;
+
+    for (let day = 1; day <= totalDaysInMonth; day++) {
+      const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isDone = calHabitData.completedDates.has(dateStr);
+      const isFuture = dateStr > todayISO;
+      const isBeforeCreation = dateStr < startTrackingISO && !isDone;
+
+      const cell = document.createElement('div');
+      let statusClass = 'inactive';
+      let icon = '➖';
+
+      if (isDone) {
+        statusClass = 'done';
+        icon = '✅';
+        doneInMonth++;
+      } else if (!isFuture && !isBeforeCreation) {
+        statusClass = 'missed';
+        icon = '❌';
+        missedInMonth++;
+      }
+
+      cell.className = `cal-day ${statusClass} ${!isFuture ? 'clickable' : ''} ${dateStr === todayISO ? 'today' : ''}`;
+      cell.title = isFuture
+        ? `${dateStr} (Fecha futura)`
+        : `${dateStr}: ${isDone ? 'Cumplido (Clic para desmarcar)' : 'No cumplido (Clic para marcar como cumplido)'}`;
+
+      cell.innerHTML = `
+        <span class="cal-day-num">${day}</span>
+        <span class="cal-day-icon">${icon}</span>
+      `;
+
+      if (!isFuture) {
+        cell.onclick = () => toggleCalendarDate(calHabitData.id, dateStr, !isDone);
+      }
+
+      grid.appendChild(cell);
+    }
+
+    document.getElementById('cal-month-summary').textContent =
+      `Resumen de ${MONTH_NAMES[calMonth]}: ✅ ${doneInMonth} cumplidos · ❌ ${missedInMonth} no cumplidos (Haz clic en cualquier día para cambiarlo)`;
+  }
+
+  async function toggleCalendarDate(habitId, dateStr, newStatus) {
+    if (!currentUser) {
+      const h = demoHabits.find(x => x.id === habitId);
+      if (!h) return;
+      if (!h.extraDates) h.extraDates = [];
+      if (newStatus) {
+        if (!h.extraDates.includes(dateStr)) h.extraDates.push(dateStr);
+      } else {
+        h.extraDates = h.extraDates.filter(d => d !== dateStr);
+      }
+      // Sincronizar también si pertenece a la semana actual
+      const monday = getMondayOfCurrentWeek();
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        if (formatLocalISO(d) === dateStr) h.days[i] = newStatus;
+      }
+      await loadHistory();
+      return;
+    }
+
+    await fetch(`${API_URL}/toggle_fecha`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        habitId: habitId,
+        date: dateStr,
+        completed: newStatus
+      })
+    });
+    await loadHistory();
+  }
+
+  // ==================== PESTAÑA 3: AMIGOS ====================
+  async function loadFriends() {
+    if (!currentUser) {
+      document.getElementById('friends-list').innerHTML = `
+        <div class="friend-card">
+          <div class="friend-header"><span class="friend-name">👤 usuario_demo (Ejemplo)</span></div>
+          <div class="friend-stats"><span>🎯 4 hábitos</span><span>🔥 19 cumplidos</span></div>
+          <button class="btn btn-sm" onclick="openAuthModal('login')">Inicia sesión para ver amigos</button>
+        </div>
+      `;
+      document.getElementById('incoming-requests').innerHTML = `<p style="color: var(--muted); font-size: 0.9rem;">Inicia sesión o crea una cuenta para recibir solicitudes de amistad.</p>`;
+      document.getElementById('outgoing-requests').innerHTML = `<p style="color: var(--muted); font-size: 0.9rem;">Sin solicitudes activas en modo prueba.</p>`;
+      return;
+    }
+
+    const res = await fetch(`${API_URL}/amigos?userId=${currentUser.id}`);
+    const data = await res.json();
+
+    const badge = document.getElementById('friend-req-badge');
+    if (data.incoming.length > 0) {
+      badge.textContent = data.incoming.length;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+
+    document.getElementById('incoming-requests').innerHTML = data.incoming.length > 0
+      ? data.incoming.map(req => `
+          <div class="request-item">
+            <div><strong>👤 ${req.username}</strong> <span style="font-size:0.8rem; color:var(--muted);">(${req.date})</span></div>
+            <div style="display:flex; gap:0.4rem;">
+              <button class="btn btn-sm btn-success" onclick="respondRequest(${req.requestId}, 'accept')">Aceptar</button>
+              <button class="btn btn-sm btn-danger" onclick="respondRequest(${req.requestId}, 'reject')">Rechazar</button>
+            </div>
+          </div>
+        `).join('')
+      : `<p style="color: var(--muted); font-size: 0.9rem;">No tienes solicitudes pendientes.</p>`;
+
+    document.getElementById('outgoing-requests').innerHTML = data.outgoing.length > 0
+      ? data.outgoing.map(req => `
+          <div class="request-item">
+            <span>👤 ${req.username}</span>
+            <span class="streak-badge">Pendiente...</span>
+          </div>
+        `).join('')
+      : `<p style="color: var(--muted); font-size: 0.9rem;">No hay solicitudes enviadas pendientes.</p>`;
+
+    document.getElementById('friends-list').innerHTML = data.friends.length > 0
+      ? data.friends.map(f => `
+          <div class="friend-card">
+            <div class="friend-header"><span class="friend-name">👤 ${f.username}</span></div>
+            <div class="friend-stats">
+              <span>🎯 ${f.totalHabits} hábitos</span>
+              <span>🔥 ${f.totalCompleted} cumplidos</span>
+            </div>
+            <button class="btn btn-sm" onclick="viewFriendStats(${f.userId})">Ver Estadísticas Compartidas</button>
+          </div>
+        `).join('')
+      : `<p style="color: var(--muted); font-size: 0.9rem;">Aún no tienes amigos agregados. ¡Envía una solicitud arriba!</p>`;
+  }
+
+  async function sendFriendRequest() {
+    if (!currentUser) {
+      openAuthModal('login');
+      return;
+    }
+    const input = document.getElementById('friend-input');
+    const feedback = document.getElementById('friend-feedback');
+    const username = input.value.trim();
+    if (!username) return;
+
+    const res = await fetch(`${API_URL}/amigos/solicitar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id, username })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      feedback.style.color = 'var(--danger)';
+      feedback.textContent = data.error;
+    } else {
+      feedback.style.color = 'var(--success)';
+      feedback.textContent = data.message;
+      input.value = '';
+      loadFriends();
+    }
+  }
+
+  async function respondRequest(requestId, action) {
+    await fetch(`${API_URL}/amigos/responder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestId, action })
+    });
+    loadFriends();
+  }
+
+  async function viewFriendStats(friendId) {
+    const res = await fetch(`${API_URL}/amigos/estadisticas/${friendId}`);
+    const data = await res.json();
+
+    document.getElementById('friend-stats-panel').classList.remove('hidden');
+    document.getElementById('friend-stats-title').textContent = `📊 Estadísticas y Hábitos de ${data.username}`;
+    document.getElementById('f-weekly-rate').textContent = `${data.weeklyRate}%`;
+    document.getElementById('f-weekly-checks').textContent = data.weeklyChecks;
+    document.getElementById('f-total-hist').textContent = `${data.totalHistorical} días`;
+
+    const histMap = {};
+    data.historicalHabits.forEach(h => histMap[h.name] = h.totalCompleted);
+
+    document.getElementById('friend-stats-tbody').innerHTML = data.weeklyHabits.map(h => {
+      const daysHtml = h.days.map(d => `<td>${d ? '✅' : '➖'}</td>`).join('');
+      const totalHist = histMap[h.name] || 0;
+      return `
+        <tr>
+          <td class="habit-name-cell">${h.name}</td>
+          ${daysHtml}
+          <td><span class="streak-badge">${totalHist} días en total</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  checkSession();
+</script>
+
+</body>
+</html>

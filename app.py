@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)
 
 CONN_STR = (
-    "Driver={ODBC Driver 17 for SQL Server};"
+    "Driver={ODBC Driver 18 for SQL Server};"
     "Server=HabitosDB_Roman.mssql.somee.com;"
     "Database=HabitosDB_Roman;"
     "UID=romang616_SQLLogin_1;"

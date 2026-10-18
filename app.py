@@ -2,7 +2,11 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import pyodbc
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    ZoneInfo = None
 
 app = Flask(__name__)
 CORS(app)
@@ -21,9 +25,21 @@ CONN_STR = (
 def get_connection():
     return pyodbc.connect(CONN_STR)
 
-def obtener_lunes_actual():
-    hoy = datetime.today().date()
-    return hoy - timedelta(days=hoy.weekday())
+def obtener_hoy_local():
+    # Usa la zona horaria local para que el corte de domingo sea a las 00:00 hora local
+    try:
+        if ZoneInfo:
+            return datetime.now(ZoneInfo("America/Matamoros")).date()
+    except Exception:
+        pass
+    return datetime.now(timezone(timedelta(hours=-5))).date()
+
+def obtener_domingo_actual():
+    hoy = obtener_hoy_local()
+    # En Python: Lunes=0 ... Sábado=5, Domingo=6
+    # Si hoy es Domingo (6), (6 + 1) % 7 = 0 -> inicia nueva semana hoy mismo
+    dias_desde_domingo = (hoy.weekday() + 1) % 7
+    return hoy - timedelta(days=dias_desde_domingo)
 
 @app.route('/')
 def index():
@@ -84,7 +100,7 @@ def iniciar_sesion():
 
     return jsonify({"id": user.IdUsuario, "username": user.NombreUsuario})
 
-# ==================== HÁBITOS SEMANALES ====================
+# ==================== HÁBITOS SEMANALES (DOMINGO A SÁBADO) ====================
 
 @app.route('/api/habitos', methods=['GET'])
 def obtener_habitos():
@@ -92,20 +108,21 @@ def obtener_habitos():
     if not user_id:
         return jsonify({"error": "No autorizado"}), 401
 
-    lunes = obtener_lunes_actual()
+    domingo = obtener_domingo_actual()
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("EXEC sp_ObtenerSemanaHabitos ?, ?", user_id, lunes)
+    cursor.execute("EXEC sp_ObtenerSemanaHabitos ?, ?", user_id, domingo)
     filas = cursor.fetchall()
     
     resultado = []
     for f in filas:
+        # f[2] a f[8] corresponden a Domingo (+0) hasta Sábado (+6)
         resultado.append({
-            "id": f.IdHabito,
-            "name": f.Nombre,
+            "id": f[0],
+            "name": f[1],
             "days": [
-                bool(f.Lunes), bool(f.Martes), bool(f.Miercoles),
-                bool(f.Jueves), bool(f.Viernes), bool(f.Sabado), bool(f.Domingo)
+                bool(f[2]), bool(f[3]), bool(f[4]),
+                bool(f[5]), bool(f[6]), bool(f[7]), bool(f[8])
             ]
         })
     conn.close()
@@ -129,8 +146,9 @@ def agregar_habito():
 @app.route('/api/toggle', methods=['POST'])
 def alternar_dia():
     data = request.json
-    lunes = obtener_lunes_actual()
-    fecha_objetivo = lunes + timedelta(days=int(data['dayIndex']))
+    domingo = obtener_domingo_actual()
+    # dayIndex: 0 = Domingo, 1 = Lunes ... 6 = Sábado
+    fecha_objetivo = domingo + timedelta(days=int(data['dayIndex']))
     
     conn = get_connection()
     cursor = conn.cursor()
@@ -142,7 +160,7 @@ def alternar_dia():
     )
     conn.commit()
     conn.close()
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "ok", "date": str(fecha_objetivo)})
 
 @app.route('/api/habitos/<int:habit_id>', methods=['DELETE'])
 def eliminar_habito(habit_id):
@@ -158,8 +176,8 @@ def eliminar_habito(habit_id):
 def reiniciar_semana():
     data = request.json
     user_id = int(data.get('userId'))
-    lunes = obtener_lunes_actual()
-    domingo = lunes + timedelta(days=6)
+    domingo = obtener_domingo_actual()
+    sabado = domingo + timedelta(days=6)
     
     conn = get_connection()
     cursor = conn.cursor()
@@ -167,12 +185,12 @@ def reiniciar_semana():
         DELETE r FROM RegistrosDiarios r
         INNER JOIN Habitos h ON r.IdHabito = h.IdHabito
         WHERE h.IdUsuario = ? AND r.Fecha BETWEEN ? AND ?
-    """, user_id, lunes, domingo)
+    """, user_id, domingo, sabado)
     conn.commit()
     conn.close()
     return jsonify({"status": "ok"})
 
-# ==================== HISTORIAL Y ESTADÍSTICAS ====================
+# ==================== HISTORIAL Y CALENDARIO ====================
 
 @app.route('/api/historial', methods=['GET'])
 def obtener_historial():
@@ -183,7 +201,6 @@ def obtener_historial():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # 1. Resumen por hábito histórico
     cursor.execute("EXEC sp_ObtenerHistorialUsuario ?", user_id)
     habitos_hist = []
     total_checkins = 0
@@ -197,7 +214,6 @@ def obtener_historial():
             "lastDate": row.UltimaFecha
         })
 
-    # 2. Últimos 20 registros cronológicos marcados como completados
     cursor.execute("""
         SELECT TOP 20 h.Nombre, CONVERT(VARCHAR(10), r.Fecha, 23) AS Fecha
         FROM RegistrosDiarios r
@@ -214,7 +230,7 @@ def obtener_historial():
         "habits": habitos_hist,
         "recentLogs": bitacora
     })
-# Obtener las fechas cumplidas de un hábito para dibujarlo en el calendario
+
 @app.route('/api/habitos/<int:habit_id>/calendario', methods=['GET'])
 def calendario_habito(habit_id):
     user_id = request.args.get('userId', type=int)
@@ -246,7 +262,6 @@ def calendario_habito(habit_id):
         "completedDates": fechas_cumplidas
     })
 
-# Permitir marcar o desmarcar cualquier fecha directamente desde el calendario
 @app.route('/api/toggle_fecha', methods=['POST'])
 def alternar_fecha_exacta():
     data = request.json
@@ -273,7 +288,6 @@ def listar_amigos():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # 1. Solicitudes pendientes recibidas
     cursor.execute("""
         SELECT a.IdAmistad, u.IdUsuario, u.NombreUsuario, CONVERT(VARCHAR(10), a.FechaSolicitud, 23) AS Fecha
         FROM Amistades a
@@ -282,7 +296,6 @@ def listar_amigos():
     """, user_id)
     recibidas = [{"requestId": r.IdAmistad, "userId": r.IdUsuario, "username": r.NombreUsuario, "date": r.Fecha} for r in cursor.fetchall()]
 
-    # 2. Solicitudes pendientes enviadas
     cursor.execute("""
         SELECT a.IdAmistad, u.IdUsuario, u.NombreUsuario
         FROM Amistades a
@@ -291,7 +304,6 @@ def listar_amigos():
     """, user_id)
     enviadas = [{"requestId": r.IdAmistad, "userId": r.IdUsuario, "username": r.NombreUsuario} for r in cursor.fetchall()]
 
-    # 3. Amigos aceptados + estadísticas rápidas
     cursor.execute("""
         SELECT 
             u.IdUsuario,
@@ -337,7 +349,6 @@ def enviar_solicitud():
         conn.close()
         return jsonify({"error": "No puedes enviarte una solicitud a ti mismo."}), 400
 
-    # Verificar si ya existe relación en cualquier dirección
     cursor.execute("""
         SELECT Estado FROM Amistades 
         WHERE (IdSolicitante = ? AND IdReceptor = ?) 
@@ -361,7 +372,7 @@ def enviar_solicitud():
 def responder_solicitud():
     data = request.json
     request_id = int(data.get('requestId'))
-    action = data.get('action') # 'accept' o 'reject'
+    action = data.get('action')
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -375,7 +386,7 @@ def responder_solicitud():
 
 @app.route('/api/amigos/estadisticas/<int:friend_id>', methods=['GET'])
 def estadisticas_amigo(friend_id):
-    lunes = obtener_lunes_actual()
+    domingo = obtener_domingo_actual()
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -385,16 +396,14 @@ def estadisticas_amigo(friend_id):
         conn.close()
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    # Semana actual del amigo
-    cursor.execute("EXEC sp_ObtenerSemanaHabitos ?, ?", friend_id, lunes)
+    cursor.execute("EXEC sp_ObtenerSemanaHabitos ?, ?", friend_id, domingo)
     semana = []
     checks_semana = 0
     for f in cursor.fetchall():
-        dias = [bool(f.Lunes), bool(f.Martes), bool(f.Miercoles), bool(f.Jueves), bool(f.Viernes), bool(f.Sabado), bool(f.Domingo)]
+        dias = [bool(f[2]), bool(f[3]), bool(f[4]), bool(f[5]), bool(f[6]), bool(f[7]), bool(f[8])]
         checks_semana += sum(1 for d in dias if d)
-        semana.append({"name": f.Nombre, "days": dias})
+        semana.append({"name": f[1], "days": dias})
 
-    # Historial acumulado del amigo
     cursor.execute("EXEC sp_ObtenerHistorialUsuario ?", friend_id)
     historial = []
     total_historico = 0

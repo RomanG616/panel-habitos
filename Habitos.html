@@ -811,7 +811,7 @@
 
   function setStatus(online) {
     const badge = document.getElementById('db-status');
-    badge.textContent = online ? '● SQL Conectado' : '● Sin conexión';
+    badge.textContent = online ? '● Conectado' : '● Sin conexión';
     badge.className = `status-badge ${online ? 'status-online' : 'status-offline'}`;
   }
 

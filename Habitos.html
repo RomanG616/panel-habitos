@@ -80,7 +80,7 @@
       background: var(--danger); color: #fff; font-size: 0.72rem;
       padding: 0.1rem 0.45rem; border-radius: 999px; font-weight: 700;
     }
-    .sidebar-footer { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 0.82rem; color: var(--muted); padding-left: 0.5rem; }
+    .sidebar-footer { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 0.8rem; color: var(--muted); padding-left: 0.5rem; display: grid; gap: 0.35rem; }
 
     /* ==================== CONTENIDO Y ENCABEZADO ==================== */
     .main-content {
@@ -93,20 +93,26 @@
       flex-wrap: wrap; gap: 0.85rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
     }
     .top-header h1 { font-size: 1.5rem; font-weight: 700; }
-    .top-actions { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; }
+    .top-actions { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; }
 
-    .status-badge { font-size: 0.78rem; padding: 0.35rem 0.75rem; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+    .status-badge { font-size: 0.76rem; padding: 0.35rem 0.7rem; border-radius: 999px; font-weight: 600; white-space: nowrap; }
     .status-online { background: rgba(34, 197, 94, 0.15); color: var(--success); }
     .status-demo { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.35); }
     .status-offline { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
     .user-chip {
       background: rgba(56, 189, 248, 0.12); color: var(--accent);
-      padding: 0.4rem 0.8rem; border-radius: 8px; font-weight: 600; font-size: 0.88rem;
-      max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      padding: 0.4rem 0.75rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem;
+      max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    .xp-chip {
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.18), rgba(56, 189, 248, 0.18));
+      border: 1px solid rgba(245, 158, 11, 0.4); color: #fde68a;
+      padding: 0.38rem 0.75rem; border-radius: 8px; font-weight: 700; font-size: 0.82rem;
+      cursor: pointer; white-space: nowrap; transition: transform 0.15s;
+    }
+    .xp-chip:hover { transform: translateY(-1px); }
 
-    /* BANNER DE MODO PRUEBA */
     .demo-banner {
       background: linear-gradient(90deg, rgba(56, 189, 248, 0.12), rgba(34, 197, 94, 0.1));
       border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 12px;
@@ -125,10 +131,10 @@
     /* BARRA DE FORMULARIO Y BOTONES */
     .bar-form {
       display: flex; gap: 0.65rem; background: var(--card); padding: 0.9rem;
-      border-radius: 12px; border: 1px solid var(--border); flex-wrap: wrap;
+      border-radius: 12px; border: 1px solid var(--border); flex-wrap: wrap; align-items: center;
     }
     .bar-form input, .select-input {
-      flex: 1; min-width: 200px; background: var(--bg); border: 1px solid var(--border);
+      flex: 1; min-width: 180px; background: var(--bg); border: 1px solid var(--border);
       color: var(--text); padding: 0.65rem 0.9rem; border-radius: 8px; outline: none; font-size: 0.95rem;
     }
     .bar-form input:focus, .select-input:focus { border-color: var(--accent); }
@@ -215,6 +221,47 @@
     .legend-items { display: flex; gap: 0.9rem; flex-wrap: wrap; }
     .legend-dot { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 0.3rem; vertical-align: middle; }
 
+    /* ==================== GAMIFICACIÓN Y LOGROS ==================== */
+    .xp-banner {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(34, 197, 94, 0.12));
+      border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem;
+      display: grid; gap: 0.75rem;
+    }
+    .xp-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .xp-progress-bg {
+      width: 100%; height: 14px; background: var(--bg);
+      border-radius: 999px; overflow: hidden; border: 1px solid var(--border);
+    }
+    .xp-progress-fill {
+      height: 100%; background: linear-gradient(90deg, var(--accent), var(--success));
+      width: 0%; transition: width 0.4s ease;
+    }
+    .achievements-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.9rem;
+    }
+    .achievement-card {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1rem; display: grid; gap: 0.5rem; opacity: 0.55; transition: all 0.2s;
+    }
+    .achievement-card.unlocked {
+      opacity: 1; border-color: rgba(34, 197, 94, 0.55);
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.08), var(--bg));
+    }
+    .ach-top { display: flex; justify-content: space-between; align-items: center; }
+    .ach-icon { font-size: 1.65rem; }
+    .ach-xp { font-size: 0.78rem; font-weight: 700; color: var(--accent); background: rgba(56, 189, 248, 0.14); padding: 0.15rem 0.5rem; border-radius: 999px; }
+    .ach-title { font-weight: 700; font-size: 0.95rem; }
+    .ach-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.35; }
+    .ach-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; margin-top: 0.2rem; }
+    .ach-bar-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.3s ease; }
+    .achievement-card.unlocked .ach-bar-fill { background: var(--success); }
+
+    .code-console {
+      background: #090d16; border: 1px solid var(--border); border-radius: 10px;
+      padding: 0.9rem; font-family: 'Consolas', monospace; font-size: 0.8rem;
+      color: #a5f3fc; overflow-x: auto; max-height: 270px; white-space: pre-wrap;
+    }
+
     /* TARJETAS DE AMIGOS */
     .friends-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.9rem; }
     .friend-card {
@@ -244,19 +291,19 @@
         background: rgba(19, 28, 49, 0.96);
         backdrop-filter: blur(10px);
         border-right: none; border-top: 1px solid var(--border);
-        padding: 0.35rem 0.5rem;
+        padding: 0.35rem 0.4rem;
       }
       .brand, .sidebar-footer { display: none; }
       .nav-menu {
-        margin-top: 0; grid-template-columns: repeat(3, 1fr); gap: 0.25rem;
+        margin-top: 0; grid-template-columns: repeat(4, 1fr); gap: 0.2rem;
       }
       .nav-btn {
         flex-direction: column; justify-content: center; text-align: center;
-        padding: 0.45rem 0.25rem; font-size: 0.74rem; border-radius: 8px; gap: 0.15rem;
+        padding: 0.45rem 0.15rem; font-size: 0.7rem; border-radius: 8px; gap: 0.15rem;
         position: relative;
       }
       .badge-count {
-        position: absolute; top: 3px; right: 18%; font-size: 0.65rem; padding: 0.05rem 0.38rem;
+        position: absolute; top: 3px; right: 15%; font-size: 0.65rem; padding: 0.05rem 0.38rem;
       }
 
       .main-content {
@@ -264,9 +311,7 @@
         gap: 1rem;
       }
 
-      .top-header {
-        gap: 0.6rem; padding-bottom: 0.75rem;
-      }
+      .top-header { gap: 0.6rem; padding-bottom: 0.75rem; }
       .top-header h1 { font-size: 1.2rem; width: 100%; }
       .top-actions { width: 100%; justify-content: space-between; }
 
@@ -343,6 +388,9 @@
         <button class="nav-btn" id="nav-historial" onclick="switchTab('historial')">
           <span>📜 Historial</span>
         </button>
+        <button class="nav-btn" id="nav-gamificacion" onclick="switchTab('gamificacion')">
+          <span>🏆 Logros y API</span>
+        </button>
         <button class="nav-btn" id="nav-amigos" onclick="switchTab('amigos')">
           <span>👥 Amigos</span>
           <span id="friend-req-badge" class="badge-count hidden">0</span>
@@ -352,6 +400,7 @@
 
     <div class="sidebar-footer">
       <span id="sidebar-mode-label">Modo Vista Previa</span>
+      <span id="ts-api-status" style="font-size: 0.75rem; color: var(--accent);">⚡ API Gamificación lista</span>
     </div>
   </aside>
 
@@ -367,7 +416,8 @@
           <button class="btn btn-sm" onclick="openAuthModal('register')">Crear Cuenta</button>
         </div>
 
-        <div id="user-actions" class="hidden" style="display: flex; align-items: center; gap: 0.45rem;">
+        <div id="user-actions" class="hidden" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+          <span class="xp-chip" id="header-xp-chip" onclick="switchTab('gamificacion')" title="Ver mis logros y nivel">🥉 Nv. 1 · 0 XP</span>
           <span class="user-chip" id="user-display">👤 Usuario</span>
           <button class="btn btn-sm btn-outline" onclick="logout()">Salir</button>
         </div>
@@ -376,7 +426,7 @@
 
     <div id="demo-banner" class="demo-banner">
       <div class="demo-banner-text">
-        👋 <strong>Modo de prueba interactivo:</strong> Marca casillas, explora el calendario mensual y prueba las gráficas. Para guardar tu progreso en el servidor, inicia sesión o crea tu cuenta.
+        👋 <strong>Modo de prueba interactivo:</strong> Marca casillas, explora el calendario mensual y prueba la pestaña de Logros. Inicia sesión para sincronizar con cuenta.
       </div>
       <button class="btn btn-sm" onclick="openAuthModal('register')">Guardar mi progreso →</button>
     </div>
@@ -452,7 +502,6 @@
         </div>
       </div>
 
-      <!-- CALENDARIO MENSUAL INTERACTIVO POR HÁBITO (DOMINGO A SÁBADO) -->
       <div class="panel" id="calendar-panel">
         <div class="cal-controls">
           <div class="cal-selector-wrap">
@@ -462,7 +511,7 @@
 
           <div class="cal-month-nav">
             <button class="btn btn-sm btn-outline" onclick="changeCalendarMonth(-1)">◀ Ant.</button>
-            <span id="cal-month-title" class="cal-month-label">Octubre 2026</span>
+            <span id="cal-month-title" class="cal-month-label">Noviembre 2026</span>
             <button class="btn btn-sm btn-outline" onclick="changeCalendarMonth(1)">Sig. ▶</button>
           </div>
         </div>
@@ -517,7 +566,96 @@
       </div>
     </section>
 
-    <!-- PESTAÑA 3: AMIGOS Y ESTADÍSTICAS COMPARTIDAS -->
+    <!-- PESTAÑA 3: GAMIFICACIÓN, NIVELES, LOGROS Y CONSOLA DE API TYPESCRIPT -->
+    <section id="tab-gamificacion" class="hidden" style="display: grid; gap: 1.25rem; min-width: 0;">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Nivel Actual</div>
+          <div class="kpi-value" id="gam-level">Nivel 1</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Experiencia Total</div>
+          <div class="kpi-value" id="gam-xp">0 XP</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Logros Desbloqueados</div>
+          <div class="kpi-value" id="gam-unlocked">0 / 6</div>
+        </div>
+      </div>
+
+      <div class="xp-banner">
+        <div class="xp-header">
+          <div>
+            <strong id="gam-rank-title" style="font-size: 1.15rem; color: var(--accent);">🥉 Novato de Hábitos</strong>
+            <p id="gam-source-note" style="font-size: 0.82rem; color: var(--muted); margin-top: 0.2rem;">
+              Ganas +25 XP por cada día cumplido, +15 XP por hábito activo y bonos por desbloquear medallas.
+            </p>
+          </div>
+          <span class="streak-badge" id="gam-xp-next">0 / 250 XP para subir de nivel</span>
+        </div>
+        <div class="xp-progress-bg">
+          <div class="xp-progress-fill" id="gam-progress-bar"></div>
+        </div>
+      </div>
+
+      <!-- SIMULADOR INTERACTIVO DE XP CONECTADO AL PIPE Y DTO DE TYPESCRIPT -->
+      <div class="bar-form">
+        <div style="font-weight: 700; font-size: 0.9rem; color: var(--accent); min-width: 170px;">
+          🚀 Simulador de XP (`POST`):
+        </div>
+        <input type="number" id="sim-days-input" placeholder="Días extra a simular (1 - 365)" value="10" min="1" max="365" style="max-width: 210px;">
+        <input type="text" id="sim-reason-input" placeholder="Motivo de simulación (mín. 3 letras)" value="Proyección de racha mensual">
+        <div class="bar-buttons">
+          <button class="btn btn-success" onclick="runInteractiveSimulation()">Simular Progreso</button>
+          <button class="btn btn-outline" onclick="loadGamificacion()">Restaurar Real</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>🏅 Catálogo de Medallas y Logros</h2>
+        <div id="achievements-grid" class="achievements-grid"></div>
+      </div>
+
+      <div class="main-grid">
+        <div class="panel">
+          <h2>👑 Ranking de XP con Amigos</h2>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pos.</th>
+                  <th class="habit-name-header">Usuario</th>
+                  <th>Nivel / Rango</th>
+                  <th>XP Total</th>
+                </tr>
+              </thead>
+              <tbody id="gam-ranking-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>🛠️ Inspector en Vivo: API TypeScript (`:3000`)</h2>
+          <p style="font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem;">
+            Prueba en vivo los <strong>Controllers, DTOs, Pipes, Guard, Logging Interceptor y Exception Filter</strong>:
+          </p>
+          <div style="display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+            <button class="btn btn-sm" onclick="testGamificacionApi('perfil')">GET Perfil (200)</button>
+            <button class="btn btn-sm btn-outline" onclick="testGamificacionApi('logros')">GET Logros (200)</button>
+            <button class="btn btn-sm btn-success" onclick="testGamificacionApi('simular')">POST Simular (200)</button>
+            <button class="btn btn-sm btn-outline" onclick="testGamificacionApi('pipe_error')">Error Pipe (400)</button>
+            <button class="btn btn-sm btn-danger" onclick="testGamificacionApi('guard_error')">Error Guard (401)</button>
+            <button class="btn btn-sm btn-outline" onclick="testGamificacionApi('not_found')">Error 404</button>
+          </div>
+          <div id="api-response-meta" style="font-size: 0.76rem; color: var(--warning); margin-bottom: 0.4rem;">
+            Haz clic en cualquier botón para inspeccionar la respuesta JSON y el tiempo del Interceptor...
+          </div>
+          <pre id="api-console-box" class="code-console">{ "info": "Selecciona una prueba arriba para ver la respuesta del servidor TypeScript/NestJS." }</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- PESTAÑA 4: AMIGOS Y ESTADÍSTICAS COMPARTIDAS -->
     <section id="tab-amigos" class="hidden" style="display: grid; gap: 1.25rem; min-width: 0;">
       <div class="bar-form">
         <input type="text" id="friend-input" placeholder="Ingresa el nombre de usuario de tu amigo..." onkeypress="if(event.key === 'Enter') sendFriendRequest()">
@@ -578,8 +716,14 @@
 </div>
 
 <script>
-  const API_URL = window.location.protocol === 'file:' ? 'http://localhost:5000/api' : '/api';
-  // Semana iniciando en Domingo y finalizando en Sábado
+  const BASE_ORIGIN = window.location.protocol === 'file:' ? 'http://localhost:5000' : '';
+  const API_URL = `${BASE_ORIGIN}/api`;
+
+  // URL principal de tu API en TypeScript (NestJS en puerto 3000) con respaldo automático
+  const TS_GAM_API_URL = 'http://localhost:3000/api/v1/gamificacion';
+  const FALLBACK_GAM_API_URL = `${BASE_ORIGIN}/api/v1/gamificacion`;
+  let activeGamApiUrl = TS_GAM_API_URL;
+
   const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const SHORT_MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -598,14 +742,35 @@
   let selectedCalHabitId = null;
   let calHabitData = null;
 
-  // Datos para el Modo Vista Previa (guarda fechas exactas en completedDates para que pasen al calendario)
   const defaultDemoHabits = [
-    { id: 101, name: '💻 Programar / Práctica de código', days: [true, true, true, false, true, false, false], completedDates: ['2026-10-01', '2026-10-02', '2026-10-05', '2026-10-06', '2026-10-08', '2026-10-12', '2026-10-14', '2026-10-15', '2026-10-18'] },
-    { id: 102, name: '🏋️ Entrenamiento físico', days: [true, false, true, true, false, false, false], completedDates: ['2026-10-01', '2026-10-03', '2026-10-06', '2026-10-07', '2026-10-13', '2026-10-16', '2026-10-18'] },
-    { id: 103, name: '📖 Lectura técnica (20 min)', days: [true, true, true, true, true, false, false], completedDates: ['2026-10-02', '2026-10-04', '2026-10-05', '2026-10-07', '2026-10-11', '2026-10-14', '2026-10-17', '2026-10-18'] },
-    { id: 104, name: '😴 Dormir 7-8 horas', days: [false, true, true, true, true, false, false], completedDates: ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-06', '2026-10-10', '2026-10-15'] }
+    { id: 101, name: '💻 Programar / Práctica de código', days: [true, true, true, false, true, false, false], completedDates: ['2026-11-01', '2026-11-02', '2026-11-05', '2026-11-06', '2026-11-08', '2026-11-09', '2026-11-10', '2026-11-12'] },
+    { id: 102, name: '🏋️ Entrenamiento físico', days: [true, false, true, true, false, false, false], completedDates: ['2026-11-01', '2026-11-03', '2026-11-06', '2026-11-08', '2026-11-10', '2026-11-11'] },
+    { id: 103, name: '📖 Lectura técnica (20 min)', days: [true, true, true, true, true, false, false], completedDates: ['2026-11-02', '2026-11-04', '2026-11-05', '2026-11-08', '2026-11-09', '2026-11-10', '2026-11-11', '2026-11-12'] },
+    { id: 104, name: '😴 Dormir 7-8 horas', days: [false, true, true, true, true, false, false], completedDates: ['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-09', '2026-11-10', '2026-11-11'] }
   ];
   let demoHabits = JSON.parse(JSON.stringify(defaultDemoHabits));
+
+  // Función que prioriza la API TypeScript (:3000) y usa respaldo si el servidor local TS está apagado
+  async function fetchFromGamificacionApi(subPath, options = {}) {
+    const statusLabel = document.getElementById('ts-api-status');
+    try {
+      const res = await fetch(`${TS_GAM_API_URL}${subPath}`, options);
+      activeGamApiUrl = TS_GAM_API_URL;
+      if (statusLabel) {
+        statusLabel.textContent = '🟢 API TypeScript (:3000) Activa';
+        statusLabel.style.color = 'var(--success)';
+      }
+      return { res, urlUsed: `${TS_GAM_API_URL}${subPath}` };
+    } catch (err) {
+      const resFallback = await fetch(`${FALLBACK_GAM_API_URL}${subPath}`, options);
+      activeGamApiUrl = FALLBACK_GAM_API_URL;
+      if (statusLabel) {
+        statusLabel.textContent = '⚡ API Gamificación (Cloud)';
+        statusLabel.style.color = 'var(--accent)';
+      }
+      return { res: resFallback, urlUsed: `${FALLBACK_GAM_API_URL}${subPath}` };
+    }
+  }
 
   function formatLocalISO(dateObj) {
     const y = dateObj.getFullYear();
@@ -614,16 +779,14 @@
     return `${y}-${m}-${d}`;
   }
 
-  // Obtiene el Domingo (inicio de semana) de la semana actual
   function getSundayOfCurrentWeek() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const dayOfWeek = today.getDay(); // 0 = Domingo, 1 = Lunes ... 6 = Sábado
+    const dayOfWeek = today.getDay();
     today.setDate(today.getDate() - dayOfWeek);
     return today;
   }
 
-  // Sincroniza las casillas de la semana actual del modo demo con sus fechas del calendario
   function syncDemoWeekFromDates() {
     const sunday = getSundayOfCurrentWeek();
     demoHabits.forEach(h => {
@@ -647,7 +810,6 @@
     if (titleEl) titleEl.textContent = `Registro Diario (${rangeText})`;
   }
 
-  // Detector automático de cambio de semana al llegar a un nuevo Domingo
   let activeSundayISO = formatLocalISO(getSundayOfCurrentWeek());
   function checkAutomaticSundayRollover() {
     const currentSundayISO = formatLocalISO(getSundayOfCurrentWeek());
@@ -656,15 +818,9 @@
       syncDemoWeekFromDates();
       updateWeeklyTitleRange();
       loadHabits();
-      if (!document.getElementById('tab-historial').classList.contains('hidden')) {
-        loadHistory();
-      }
     }
   }
   setInterval(checkAutomaticSundayRollover, 60000);
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) checkAutomaticSundayRollover();
-  });
 
   // ==================== MODAL DE CONFIRMACIÓN PERSONALIZADO ====================
   function showCustomConfirm({ icon = '⚠️', title, message, confirmText = 'Aceptar', showCancel = true, onConfirm }) {
@@ -776,6 +932,7 @@
       sidebarLabel.textContent = `Conectado como ${currentUser.username}`;
       switchTab('semanal');
       loadFriends();
+      refreshHeaderGamificacionBadge();
     } else {
       guestActions.classList.remove('hidden');
       userActions.classList.add('hidden');
@@ -787,9 +944,27 @@
     }
   }
 
+  // Actualiza la insignia de Nivel y XP del encabezado consumiendo la API en TypeScript
+  async function refreshHeaderGamificacionBadge() {
+    if (!currentUser) return;
+    try {
+      const { res } = await fetchFromGamificacionApi(`/perfil/${currentUser.id}`, {
+        headers: { 'X-User-Id': String(currentUser.id) }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const chip = document.getElementById('header-xp-chip');
+      if (chip) {
+        chip.textContent = `${data.rankIcon} Nv. ${data.level} · ${data.totalXp} XP`;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   // ==================== NAVEGACIÓN DE PESTAÑAS ====================
   function switchTab(tabName) {
-    ['semanal', 'historial', 'amigos'].forEach(t => {
+    ['semanal', 'historial', 'gamificacion', 'amigos'].forEach(t => {
       document.getElementById(`tab-${t}`).classList.add('hidden');
       document.getElementById(`nav-${t}`).classList.remove('active');
     });
@@ -800,12 +975,14 @@
     const titles = {
       semanal: '⚡ Panel Semanal de Hábitos',
       historial: '📜 Historial y Calendario',
+      gamificacion: '🏆 Gamificación, Niveles y Logros',
       amigos: '👥 Amigos y Comunidad'
     };
     document.getElementById('page-title').textContent = titles[tabName];
 
     if (tabName === 'semanal') loadHabits();
     if (tabName === 'historial') loadHistory();
+    if (tabName === 'gamificacion') loadGamificacion();
     if (tabName === 'amigos') loadFriends();
   }
 
@@ -908,11 +1085,12 @@
         }
         toggleDeleteMode(false);
         await loadHabits();
+        refreshHeaderGamificacionBadge();
       }
     });
   }
 
-  // ==================== PESTAÑA 1: SEMANAL (DOMINGO A SÁBADO) ====================
+  // ==================== PESTAÑA 1: SEMANAL ====================
   async function loadHabits() {
     updateWeeklyTitleRange();
     if (!currentUser) {
@@ -964,6 +1142,7 @@
       body: JSON.stringify({ habitId, dayIndex, completed: isChecked })
     });
     await loadHabits();
+    refreshHeaderGamificacionBadge();
   }
 
   async function addHabit() {
@@ -985,6 +1164,7 @@
     });
     input.value = '';
     await loadHabits();
+    refreshHeaderGamificacionBadge();
   }
 
   function resetWeek() {
@@ -1015,6 +1195,7 @@
           body: JSON.stringify({ userId: currentUser.id })
         });
         await loadHabits();
+        refreshHeaderGamificacionBadge();
       }
     });
   }
@@ -1093,13 +1274,13 @@
     });
   }
 
-  // ==================== PESTAÑA 2: HISTORIAL Y CALENDARIO MENSUAL ====================
+  // ==================== PESTAÑA 2: HISTORIAL Y CALENDARIO ====================
   async function loadHistory() {
     if (!currentUser) {
       const demoStats = demoHabits.map(h => ({
         id: h.id,
         name: h.name,
-        createdAt: '2026-10-01',
+        createdAt: '2026-11-01',
         totalCompleted: (h.completedDates || []).length
       })).sort((a, b) => b.totalCompleted - a.totalCompleted);
 
@@ -1120,7 +1301,7 @@
       `).join('');
 
       document.getElementById('logs-tbody').innerHTML = `
-        <tr><td colspan="2" style="color: var(--muted);">Inicia sesión para guardar tu bitácora permanente en SQL Server.</td></tr>
+        <tr><td colspan="2" style="color: var(--muted);">Inicia sesión para guardar tu bitácora permanente en tu cuenta.</td></tr>
       `;
 
       populateCalendarSelect(demoStats);
@@ -1202,7 +1383,7 @@
       calHabitData = {
         id: h.id,
         name: h.name,
-        createdAt: '2026-10-01',
+        createdAt: '2026-11-01',
         completedDates: new Set(h.completedDates || [])
       };
       renderCalendarGrid();
@@ -1230,7 +1411,6 @@
 
     const firstDayOfMonth = new Date(calYear, calMonth, 1);
     const totalDaysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-    // Como el calendario inicia en Domingo (getDay() === 0), el desplazamiento es directo:
     const startOffset = firstDayOfMonth.getDay();
 
     const todayISO = formatLocalISO(new Date());
@@ -1307,9 +1487,214 @@
       })
     });
     await loadHistory();
+    refreshHeaderGamificacionBadge();
   }
 
-  // ==================== PESTAÑA 3: AMIGOS ====================
+  // ==================== PESTAÑA 3: GAMIFICACIÓN Y PROBADOR DE API TYPESCRIPT ====================
+  function buildDemoGamificacionProfile(extraSimulatedXp = 0) {
+    const totalHabits = demoHabits.length;
+    const totalChecks = demoHabits.reduce((sum, h) => sum + (h.completedDates || []).length, 0);
+    const weekChecks = demoHabits.reduce((sum, h) => sum + h.days.filter(Boolean).length, 0);
+
+    const achievements = [
+      { id: 'primer_paso', title: 'Primer Paso', description: 'Completa tu primer día de cualquier hábito.', icon: '🌱', xpReward: 50, currentProgress: Math.min(totalChecks, 1), targetValue: 1, unlocked: totalChecks >= 1 },
+      { id: 'constancia_7', title: 'Semana de Acero', description: 'Acumula 7 días cumplidos en total.', icon: '🔥', xpReward: 100, currentProgress: Math.min(totalChecks, 7), targetValue: 7, unlocked: totalChecks >= 7 },
+      { id: 'constancia_30', title: 'Maestro Mensual', description: 'Acumula 30 días cumplidos en tu historial.', icon: '🏅', xpReward: 250, currentProgress: Math.min(totalChecks, 30), targetValue: 30, unlocked: totalChecks >= 30 },
+      { id: 'arquitecto_metas', title: 'Arquitecto de Metas', description: 'Ten al menos 5 hábitos activos definidos.', icon: '🎯', xpReward: 80, currentProgress: Math.min(totalHabits, 5), targetValue: 5, unlocked: totalHabits >= 5 },
+      { id: 'semana_activa', title: 'Imparable Semanal', description: 'Logra 10 check-ins dentro de la semana actual (Dom - Sáb).', icon: '⚡', xpReward: 120, currentProgress: Math.min(weekChecks, 10), targetValue: 10, unlocked: weekChecks >= 10 },
+      { id: 'comunidad_social', title: 'Espíritu de Equipo', description: 'Agrega al menos a 1 amigo en la plataforma.', icon: '🤝', xpReward: 100, currentProgress: 0, targetValue: 1, unlocked: false }
+    ];
+
+    const unlockedCount = achievements.filter(a => a.unlocked).length;
+    const xpFromAchievements = achievements.reduce((sum, a) => sum + (a.unlocked ? a.xpReward : 0), 0);
+    const totalXp = (totalChecks * 25) + (totalHabits * 15) + xpFromAchievements + extraSimulatedXp;
+    const level = Math.floor(totalXp / 250) + 1;
+    const currentLevelXp = totalXp % 250;
+    const progressPercent = Math.round((currentLevelXp / 250) * 100);
+
+    const ranks = [
+      { level: 1, title: 'Novato de Hábitos', icon: '🥉' },
+      { level: 2, title: 'Aprendiz Constante', icon: '🥈' },
+      { level: 3, title: 'Guerrero de la Disciplina', icon: '🥇' },
+      { level: 4, title: 'Maestro del Enfoque', icon: '💎' },
+      { level: 5, title: 'Leyenda Imparable', icon: '👑' }
+    ];
+    const r = ranks.find(x => x.level === level) || ranks[ranks.length - 1];
+
+    return {
+      userId: 0,
+      username: 'usuario_demo',
+      totalXp,
+      level,
+      rankTitle: r.title,
+      rankIcon: r.icon,
+      currentLevelXp,
+      nextLevelXp: 250,
+      progressPercent,
+      unlockedCount,
+      totalAchievements: achievements.length,
+      achievements
+    };
+  }
+
+  async function loadGamificacion() {
+    if (!currentUser) {
+      const demoProfile = buildDemoGamificacionProfile();
+      renderGamificacionUI(demoProfile, [
+        { position: 1, username: 'usuario_demo (Tú)', level: demoProfile.level, rankIcon: demoProfile.rankIcon, rankTitle: demoProfile.rankTitle, totalXp: demoProfile.totalXp, isCurrentUser: true },
+        { position: 2, username: 'amigo_ejemplo', level: 2, rankIcon: '🥈', rankTitle: 'Aprendiz Constante', totalXp: 390, isCurrentUser: false }
+      ]);
+      return;
+    }
+
+    try {
+      const [resPerfilObj, resRankingObj] = await Promise.all([
+        fetchFromGamificacionApi(`/perfil/${currentUser.id}`, { headers: { 'X-User-Id': String(currentUser.id) } }),
+        fetchFromGamificacionApi(`/ranking/${currentUser.id}`, { headers: { 'X-User-Id': String(currentUser.id) } })
+      ]);
+      const perfilData = await resPerfilObj.res.json();
+      const rankingData = await resRankingObj.res.json();
+      renderGamificacionUI(perfilData, rankingData.leaderboard || []);
+      refreshHeaderGamificacionBadge();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function renderGamificacionUI(profile, leaderboard, simulationBannerText = null) {
+    document.getElementById('gam-level').textContent = `Nivel ${profile.level}`;
+    document.getElementById('gam-xp').textContent = `${profile.totalXp} XP`;
+    document.getElementById('gam-unlocked').textContent = `${profile.unlockedCount} / ${profile.totalAchievements}`;
+    document.getElementById('gam-rank-title').textContent = `${profile.rankIcon} ${profile.rankTitle}`;
+    document.getElementById('gam-xp-next').textContent = `${profile.currentLevelXp} / ${profile.nextLevelXp} XP (${profile.progressPercent}%)`;
+    document.getElementById('gam-progress-bar').style.width = `${profile.progressPercent}%`;
+
+    const noteEl = document.getElementById('gam-source-note');
+    if (simulationBannerText) {
+      noteEl.innerHTML = `<strong style="color: var(--success);">⚡ Simulación activa:</strong> ${simulationBannerText}`;
+    } else {
+      noteEl.textContent = 'Ganas +25 XP por cada día cumplido, +15 XP por hábito activo y bonos por desbloquear medallas.';
+    }
+
+    document.getElementById('achievements-grid').innerHTML = (profile.achievements || []).map(a => {
+      const pct = a.targetValue > 0 ? Math.min(100, Math.round((a.currentProgress / a.targetValue) * 100)) : 0;
+      return `
+        <div class="achievement-card ${a.unlocked ? 'unlocked' : ''}">
+          <div class="ach-top">
+            <span class="ach-icon">${a.icon}</span>
+            <span class="ach-xp">+${a.xpReward} XP</span>
+          </div>
+          <div class="ach-title">${a.title} ${a.unlocked ? '✅' : '🔒'}</div>
+          <div class="ach-desc">${a.description}</div>
+          <div class="ach-bar-bg"><div class="ach-bar-fill" style="width: ${pct}%;"></div></div>
+          <div style="font-size: 0.76rem; color: var(--accent); font-weight: 600;">
+            Progreso: ${a.currentProgress} / ${a.targetValue} (${pct}%)
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if (leaderboard) {
+      document.getElementById('gam-ranking-tbody').innerHTML = leaderboard.map(r => `
+        <tr style="${r.isCurrentUser ? 'background: rgba(56, 189, 248, 0.1); font-weight: 700;' : ''}">
+          <td>#${r.position}</td>
+          <td class="habit-name-cell">👤 ${r.username}</td>
+          <td>Nv.${r.level} ${r.rankIcon}</td>
+          <td><span class="streak-badge">${r.totalXp} XP</span></td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  // Ejecuta el formulario de simulación contra el endpoint POST /simular-xp de TypeScript
+  async function runInteractiveSimulation() {
+    const uid = currentUser ? currentUser.id : 1;
+    const extraDaysVal = Number(document.getElementById('sim-days-input').value);
+    const reasonVal = document.getElementById('sim-reason-input').value;
+
+    const metaEl = document.getElementById('api-response-meta');
+    const consoleEl = document.getElementById('api-console-box');
+
+    try {
+      const { res, urlUsed } = await fetchFromGamificacionApi('/simular-xp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': String(uid)
+        },
+        body: JSON.stringify({
+          userId: uid,
+          extraDays: extraDaysVal,
+          reason: reasonVal
+        })
+      });
+
+      const timeHeader = res.headers.get('X-Response-Time-Ms') || '-';
+      const data = await res.json();
+
+      metaEl.textContent = `HTTP ${res.status} | Tiempo (LoggingInterceptor): ${timeHeader} ms | POST ${urlUsed}`;
+      consoleEl.textContent = JSON.stringify(data, null, 2);
+
+      if (res.ok && data.projectedProfile) {
+        renderGamificacionUI(
+          data.projectedProfile,
+          null,
+          `+${data.simulatedBonusXp} XP (${data.simulatedExtraDays} días extra) — "${data.simulationReason}"`
+        );
+      }
+    } catch (err) {
+      if (!currentUser) {
+        const simulated = buildDemoGamificacionProfile((extraDaysVal || 0) * 25);
+        renderGamificacionUI(simulated, null, `+${(extraDaysVal || 0) * 25} XP simulados en modo vista previa`);
+      }
+    }
+  }
+
+  // Probador interactivo para demostrar Controllers, Pipes, Guard, Interceptor y Exception Filter de TypeScript
+  async function testGamificacionApi(testType) {
+    const uid = currentUser ? currentUser.id : 1;
+    const metaEl = document.getElementById('api-response-meta');
+    const consoleEl = document.getElementById('api-console-box');
+
+    let subPath = `/perfil/${uid}`;
+    let options = { method: 'GET', headers: { 'X-User-Id': String(uid) } };
+
+    if (testType === 'logros') {
+      subPath = `/logros/${uid}`;
+    } else if (testType === 'simular') {
+      subPath = `/simular-xp`;
+      options = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': String(uid) },
+        body: JSON.stringify({ userId: uid, extraDays: 10, reason: 'Simulación desde panel web' })
+      };
+    } else if (testType === 'pipe_error') {
+      // Envía 'abc' en lugar de un entero positivo para activar ParsePositiveIntPipe (400 Bad Request)
+      subPath = `/perfil/abc`;
+      options = { method: 'GET', headers: { 'X-User-Id': String(uid) } };
+    } else if (testType === 'guard_error') {
+      // Omite la cabecera X-User-Id para activar GamificacionAuthGuard (401 Unauthorized)
+      subPath = `/perfil/${uid}`;
+      options = { method: 'GET', headers: {} };
+    } else if (testType === 'not_found') {
+      // Envía un ID inexistente (99999) para activar UsuarioNoEncontradoException (404 Not Found)
+      subPath = `/perfil/99999`;
+      options = { method: 'GET', headers: { 'X-User-Id': String(uid) } };
+    }
+
+    try {
+      const { res, urlUsed } = await fetchFromGamificacionApi(subPath, options);
+      const timeHeader = res.headers.get('X-Response-Time-Ms') || '-';
+      const data = await res.json();
+      metaEl.textContent = `HTTP ${res.status} | Tiempo (LoggingInterceptor): ${timeHeader} ms | ${options.method} ${urlUsed}`;
+      consoleEl.textContent = JSON.stringify(data, null, 2);
+    } catch (err) {
+      metaEl.textContent = 'No se pudo conectar con localhost:3000. Asegúrate de tener corriendo "npm start" en api-gamificacion-ts.';
+      consoleEl.textContent = String(err);
+    }
+  }
+
+  // ==================== PESTAÑA 4: AMIGOS ====================
   async function loadFriends() {
     if (!currentUser) {
       document.getElementById('friends-list').innerHTML = `
@@ -1404,6 +1789,7 @@
       body: JSON.stringify({ requestId, action })
     });
     loadFriends();
+    refreshHeaderGamificacionBadge();
   }
 
   async function viewFriendStats(friendId) {
@@ -1413,7 +1799,7 @@
     document.getElementById('friend-stats-panel').classList.remove('hidden');
     document.getElementById('friend-stats-title').textContent = `📊 Hábitos de ${data.username}`;
     document.getElementById('f-weekly-rate').textContent = `${data.weeklyRate}%`;
-    document.getElementById('f-weekly-checks').textContent = data.weeklyChecks;
+    document.getElementById('f-weekly-checks').textContent = `${data.weeklyChecks}`;
     document.getElementById('f-total-hist').textContent = `${data.totalHistorical}d`;
 
     const histMap = {};
